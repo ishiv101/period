@@ -27,11 +27,11 @@ public class CalendarLogic {
     /** Rough phase label from day number */
     public String cyclePhase() {
         long day = dayOfCycle();
-        if (day <= 5) return "Menstrual Phase 🩸";
-        if (day <= 14) return "Follicular Phase 🌱";
-        if (day <= 17) return "Ovulation Phase 🌼";
-        if (day <= 28) return "Luteal Phase 🌙";
-        return "New Cycle Starting Soon 🔄";
+        if (day <= 5) return "Menstrual Phase";
+        if (day <= 14) return "Follicular Phase";
+        if (day <= 17) return "Ovulation Phase";
+        if (day <= 28) return "Luteal Phase";
+        return "New Cycle Starting Soon";
     }
 }
 

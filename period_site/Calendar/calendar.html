@@ -4,79 +4,111 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cycle Tracker 🌸</title>
+  <title>🌸 Cycle Tracker</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Playfair+Display:wght@600&display=swap"
+    rel="stylesheet">
+
   <style>
+    /* 🌈 Background */
     body {
       font-family: "Poppins", sans-serif;
-      background: linear-gradient(135deg, #ffdee9 0%, #b5fffc 100%);
+      background: linear-gradient(135deg, #ffe0f0 0%, #d4f7ff 100%);
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
+      color: #444;
     }
 
+    /* 💖 Tracker card */
     .tracker {
-      background: #fff;
-      padding: 35px 45px;
-      border-radius: 20px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      background: #ffffffcc;
+      backdrop-filter: blur(12px);
+      padding: 40px 45px;
+      border-radius: 25px;
+      box-shadow: 0 10px 35px rgba(255, 182, 193, 0.4);
       text-align: center;
-      width: 95%;
-      max-width: 420px;
+      width: 90%;
+      max-width: 440px;
+      transition: 0.3s ease;
+    }
+
+    .tracker:hover {
+      transform: scale(1.02);
+      box-shadow: 0 12px 40px rgba(255, 182, 193, 0.6);
     }
 
     h1 {
-      color: #ff4f81;
-      margin-bottom: 20px;
+      font-family: "Playfair Display", serif;
+      font-size: 1.8rem;
+      color: #ff5f91;
+      margin-bottom: 10px;
     }
 
+    p.subtitle {
+      font-size: 0.95rem;
+      color: #666;
+      margin-bottom: 25px;
+    }
+
+    /* 💅 Inputs */
     input[type="date"] {
-      border: 2px solid #ff8fb1;
-      border-radius: 10px;
-      padding: 10px;
-      margin: 10px 0;
+      border: 2px solid #ffb6c1;
+      border-radius: 12px;
+      padding: 12px;
+      margin: 10px 0 20px;
       font-size: 1rem;
-      width: 70%;
+      width: 75%;
       text-align: center;
-      transition: 0.2s;
+      transition: 0.3s;
+      background: #fffafc;
     }
 
     input[type="date"]:focus {
-      border-color: #ff4f81;
+      border-color: #ff5f91;
+      box-shadow: 0 0 10px #ffd6e3;
       outline: none;
     }
 
     button {
-      background: #ff4f81;
+      background: linear-gradient(135deg, #ff88b7, #ff5f91);
       border: none;
       color: #fff;
-      font-weight: bold;
-      padding: 10px 20px;
-      border-radius: 10px;
+      font-weight: 600;
+      padding: 12px 26px;
+      border-radius: 15px;
       cursor: pointer;
-      transition: 0.3s;
-      margin-top: 5px;
+      transition: 0.3s ease;
+      font-size: 1rem;
+      letter-spacing: 0.5px;
     }
 
     button:hover {
-      background: #ff6f91;
-      transform: scale(1.05);
+      transform: translateY(-3px);
+      background: linear-gradient(135deg, #ff72a2, #ff4885);
+      box-shadow: 0 6px 15px rgba(255, 128, 171, 0.5);
     }
 
+    /* 💌 Results */
     .result-card {
-      background: #fff0f5;
-      border-radius: 12px;
+      background: #fff0f6;
+      border-radius: 16px;
       padding: 20px;
-      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-      margin-top: 20px;
-      transition: 0.3s ease;
+      box-shadow: 0 6px 15px rgba(255, 160, 190, 0.25);
+      margin-top: 25px;
       text-align: left;
     }
 
     .result-card h3 {
       color: #ff4f81;
       margin: 0 0 8px;
+      font-size: 1.1rem;
     }
 
     .result-card p {
@@ -85,6 +117,7 @@
       font-size: 0.95rem;
     }
 
+    /* 🌷 Calendar */
     .calendar {
       margin-top: 25px;
       display: grid;
@@ -95,34 +128,46 @@
 
     .calendar div {
       padding: 8px 0;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 0.85rem;
       color: #333;
       background: #fff;
+      box-shadow: 0 2px 4px rgba(255, 105, 135, 0.1);
     }
 
     .header {
       font-weight: bold;
       color: #ff4f81;
       background: none;
+      box-shadow: none;
     }
 
     .period {
-      background-color: #ffb3c1;
-    }
-
-    .ovulation {
-      background-color: #fff9c4;
-    }
-
-    .next {
       background-color: #ffcce0;
     }
 
+    .ovulation {
+      background-color: #fff7b3;
+    }
+
+    .next {
+      background-color: #ffd6eb;
+    }
+
+    .legend {
+      margin-top: 18px;
+      font-size: 0.9rem;
+      color: #555;
+      background: #fff9fb;
+      padding: 8px 12px;
+      border-radius: 12px;
+      display: inline-block;
+    }
+
     .footer {
-      margin-top: 25px;
-      font-size: 0.85rem;
-      color: #666;
+      margin-top: 30px;
+      font-size: 0.8rem;
+      color: #888;
     }
 
     .hidden {
@@ -134,12 +179,13 @@
 <body>
   <div class="tracker">
     <h1>🌸 Cycle Tracker</h1>
-    <label for="periodDate">Select Last Period Date:</label><br />
+    <p class="subtitle">Stay in tune with your body 💕</p>
+
     <input type="date" id="periodDate" />
     <br />
-    <button onclick="checkCycle()">Check Cycle</button>
+    <button onclick="checkCycle()">✨ Check My Cycle</button>
 
-    <!-- Results card -->
+    <!-- Results -->
     <div id="resultCard" class="result-card hidden">
       <h3 id="phase"></h3>
       <p id="cycleDay"></p>
@@ -149,7 +195,12 @@
     <!-- Calendar -->
     <div class="calendar hidden" id="calendar"></div>
 
-    <div class="footer">✨ Predict your next period & ovulation easily</div>
+    <!-- Legend -->
+    <div class="legend hidden" id="legend">
+      🩸 Period • 🌼 Ovulation • 💖 Next Period
+    </div>
+
+    <div class="footer">Made with love 💗</div>
   </div>
 
   <script>
@@ -160,31 +211,33 @@
       const nextEl = document.getElementById("nextPeriod");
       const card = document.getElementById("resultCard");
       const calendar = document.getElementById("calendar");
+      const legend = document.getElementById("legend");
 
       if (!date) {
-        alert("Please select a date first.");
+        alert("Please select your last period date 🌷");
         return;
       }
 
-      phaseEl.textContent = "Loading...";
+      phaseEl.textContent = "Checking...";
       card.classList.remove("hidden");
       calendar.classList.add("hidden");
+      legend.classList.add("hidden");
       calendar.innerHTML = "";
 
       try {
         const response = await fetch(`http://localhost:8000/cycle?last=${date}`);
         const data = await response.json();
 
-        // 🩷 Update the card info
-        phaseEl.textContent = `💖 ${data.phase}`;
+        // Display cycle details
+        phaseEl.textContent = `${data.phase}`;
         dayEl.textContent = `📅 Cycle Day: ${data.day}`;
         nextEl.textContent = `🩸 Next Period: ${data.nextPeriod}`;
         card.classList.remove("hidden");
 
-        // Build calendar
         buildCalendar(date, data.nextPeriod);
+        legend.classList.remove("hidden");
       } catch (err) {
-        phaseEl.textContent = "❌ Error: Could not connect to backend.";
+        phaseEl.textContent = "❌ Could not connect to backend.";
         dayEl.textContent = "";
         nextEl.textContent = "";
       }
@@ -195,8 +248,8 @@
       const start = new Date(periodStart);
       const next = new Date(nextPeriod);
       const ovulation = new Date(start.getTime() + 14 * 86400000);
-
       const days = ["S", "M", "T", "W", "T", "F", "S"];
+
       for (const d of days) {
         const div = document.createElement("div");
         div.textContent = d;
@@ -204,7 +257,6 @@
         calendarDiv.appendChild(div);
       }
 
-      // Simple 30-day window
       for (let i = 0; i < 30; i++) {
         const day = new Date(start.getTime() + i * 86400000);
         const cell = document.createElement("div");
@@ -214,7 +266,6 @@
         else if (sameDay(day, ovulation)) cell.classList.add("ovulation");
         else if (sameDay(day, next)) cell.classList.add("next");
 
-        cell.title = getPhaseLabel(start, day);
         calendarDiv.appendChild(cell);
       }
 
@@ -227,15 +278,6 @@
         d1.getMonth() === d2.getMonth() &&
         d1.getDate() === d2.getDate()
       );
-    }
-
-    function getPhaseLabel(start, day) {
-      const diff = Math.floor((day - start) / 86400000);
-      if (diff <= 5) return "Menstrual Phase 🩸";
-      if (diff <= 14) return "Follicular Phase 🌱";
-      if (diff <= 17) return "Ovulation Phase 🌼";
-      if (diff <= 28) return "Luteal Phase 🌙";
-      return "Next Cycle 🔄";
     }
   </script>
 </body>

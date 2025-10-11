@@ -66,8 +66,8 @@ public class Main {
             CalendarLogic tracker = new CalendarLogic(LocalDate.parse(last));
 
             String json = String.format(
-                "{ \"last\":\"%s\", \"day\": %d, \"nextPeriod\": \"%s\", \"phase\": \"%s\" }",
-                tracker.getLastPeriod(), tracker.dayOfCycle(), tracker.nextPeriodDate(), tracker.cyclePhase()
+                "{ \"last\":\"%s\", \"day\": %d, \"nextPeriod\": \"%s\", \"phase\": \"%s\", \"symptoms\": \"%s\" }",
+                tracker.getLastPeriod(), tracker.dayOfCycle(), tracker.nextPeriodDate(), tracker.cyclePhase(), new Symptoms().getSymptoms(tracker.cyclePhase())
             );
 
             byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
