@@ -15,17 +15,18 @@ public class ChatBot {
     private static final String MODEL_NAME = "gemini-2.5-flash-preview-05-20";
 
     public static String processChatRequest(String requestBody) {
-        // Crude JSON parsing
+        // extracts message, symptoms, and cycle day from user message
         String userMessage = extractValue(requestBody, "message");
         String symptoms = extractValue(requestBody, "symptoms");
         String cycleDay = extractValue(requestBody, "cycleDay");
 
         String aiResponse = callGeminiApi(userMessage, symptoms, cycleDay);
 
-        // Return JSON
+        // wrap AI answer in JSON
         return "{\"response\": \"" + escapeJson(aiResponse) + "\"}";
     }
 
+    // Builds text prompt from user data and calls Gemini API
     public static String callGeminiApi(String userMessage, String symptoms, String cycleDay) {
         String fullPrompt = buildGeminiPrompt(userMessage, symptoms, cycleDay);
         try {
@@ -36,7 +37,7 @@ public class ChatBot {
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setDoOutput(true);
 
-            String systemInstruction = "You are a friendly, compassionate, and non-diagnostic AI specialist focusing on menstrual cycle health. Include the user's phase and 2 practical tips. Be concise and kind.";
+            String systemInstruction = "You are a friendly, compassionate, and non-diagnostic AI specialist focusing on menstrual cycle health. Include the user's phase and 2 practical tips for their current symptoms. Be concise and kind. Ask if they have any follow up questions.";
 
             String jsonPayload = String.format(
                 "{\"contents\": [{\"parts\": [{\"text\": \"%s\"}]}], \"systemInstruction\": {\"parts\": [{\"text\": \"%s\"}]}}",
@@ -60,7 +61,7 @@ public class ChatBot {
                 return "Gemini API Error (" + responseCode + "): " + responseText;
             }
 
-            // Extract the AI text
+            // Extracts text fields from Gemini JSON using regular expressions
             Pattern pattern = Pattern.compile("\"text\"\\s*:\\s*\"(.*?)\"", Pattern.DOTALL);
             Matcher matcher = pattern.matcher(responseText);
             StringBuilder extracted = new StringBuilder();
@@ -93,6 +94,7 @@ public class ChatBot {
     }
 
     private static String escapeJson(String s) {
+        //prevents formatting errors
         return s.replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
     }
 }

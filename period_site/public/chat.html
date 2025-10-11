@@ -7,6 +7,8 @@
     <title>Period Pal: Cycle Chatbot</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -124,10 +126,11 @@
                 bubble.classList.add('bg-gray-100', 'text-gray-800', 'rounded-tl-none', 'whitespace-pre-wrap');
                 
                 // Convert AI suggestions (bullet points) to a nice list
-                message = message.replace(/(\*|\-)\s/g, '• ');
+                message = message.replace(/\n[•*-]\s*/g, '\n');
+                message = message.replace("\\*\\*(.*?)\\*\\*", "$1");
             }
 
-            bubble.innerHTML = message;
+            bubble.innerHTML = marked.parse(message);
             messageElement.appendChild(bubble);
             chatContainer.appendChild(messageElement);
             
