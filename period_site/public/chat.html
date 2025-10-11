@@ -1,0 +1,204 @@
+<!-- This single file contains all HTML, CSS (Tailwind), and JavaScript -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Period Pal: Cycle Chatbot</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-pink': '#e91e63',
+                        'secondary-berry': '#d81b60',
+                        'bg-light': '#fce4ec',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .chat-container {
+            height: calc(100vh - 200px); /* Adjust height for inputs */
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        /* Custom scrollbar for aesthetics */
+        .chat-container::-webkit-scrollbar { width: 8px; }
+        .chat-container::-webkit-scrollbar-thumb { background-color: #f06292; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-bg-light min-h-screen flex items-center justify-center font-sans p-4">
+
+    <div class="w-full max-w-2xl bg-white shadow-2xl rounded-xl overflow-hidden flex flex-col h-[90vh]">
+        
+        <!-- Header -->
+        <header class="bg-secondary-berry text-white p-4 flex items-center rounded-t-xl">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h1 class="text-xl font-bold">Period Pal Chatbot</h1>
+        </header>
+
+        <!-- Chat Display Area -->
+        <div id="chat-container" class="chat-container p-4 flex-grow flex flex-col space-y-3">
+            <!-- Initial welcome message -->
+            <div class="flex justify-start">
+                <div class="bg-primary-pink text-white p-3 rounded-tr-xl rounded-bl-xl rounded-br-xl max-w-xs md:max-w-md shadow">
+                    Welcome! I'm your Period Pal. To give you the best advice, please enter your current **Cycle Day** and **Symptoms** below, and then ask me a question!
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area (Cycle Info + Message) -->
+        <div class="p-4 border-t border-gray-200">
+            <div id="loading-indicator" class="text-secondary-berry text-sm mb-2 hidden">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Thinking...
+            </div>
+            
+            <div class="flex flex-wrap gap-3 mb-3">
+                <div class="flex-1 min-w-[45%]">
+                    <label for="cycleDay" class="block text-xs font-medium text-gray-700">Current Cycle Day (1-35):</label>
+                    <input type="number" id="cycleDay" placeholder="e.g., 20" min="1" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary-pink focus:border-primary-pink shadow-sm">
+                </div>
+                <div class="flex-1 min-w-[45%]">
+                    <label for="symptoms" class="block text-xs font-medium text-gray-700">Key Symptoms (separate by comma):</label>
+                    <input type="text" id="symptoms" placeholder="e.g., cramps, bloating, fatigue" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary-pink focus:border-primary-pink shadow-sm">
+                </div>
+            </div>
+
+            <div class="flex space-x-2">
+                <input type="text" id="userInput" placeholder="Ask your Period Pal a question..." class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-primary-pink focus:border-primary-pink shadow-inner" onkeydown="if(event.key === 'Enter') sendMessage()">
+                <button id="sendButton" onclick="sendMessage()" class="bg-primary-pink hover:bg-secondary-berry text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200 disabled:opacity-50">
+                    Send
+                </button>
+            </div>
+            <div id="error-message" class="text-red-500 text-sm mt-2 hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        // Server details
+        const CHAT_ENDPOINT = 'http://localhost:8080/api/chat';
+        
+        // DOM Elements
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('userInput');
+        const cycleDayInput = document.getElementById('cycleDay');
+        const symptomsInput = document.getElementById('symptoms');
+        const sendButton = document.getElementById('sendButton');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
+
+        /**
+         * Adds a chat message bubble to the display.
+         * @param {string} message - The text content of the message.
+         * @param {string} sender - 'user' or 'ai'.
+         */
+        function addMessage(message, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('flex', sender === 'user' ? 'justify-end' : 'justify-start');
+            
+            const bubble = document.createElement('div');
+            bubble.classList.add(
+                'p-3',
+                'rounded-xl',
+                'max-w-xs',
+                'md:max-w-md',
+                'shadow'
+            );
+
+            if (sender === 'user') {
+                bubble.classList.add('bg-secondary-berry', 'text-white', 'rounded-tr-none');
+            } else {
+                bubble.classList.add('bg-gray-100', 'text-gray-800', 'rounded-tl-none', 'whitespace-pre-wrap');
+                
+                // Convert AI suggestions (bullet points) to a nice list
+                message = message.replace(/(\*|\-)\s/g, '• ');
+            }
+
+            bubble.innerHTML = message;
+            messageElement.appendChild(bubble);
+            chatContainer.appendChild(messageElement);
+            
+            // Scroll to the bottom to show the new message
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        /**
+         * Main function to send the message to the Java backend.
+         */
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            const cycleDay = cycleDayInput.value.trim();
+            const symptoms = symptomsInput.value.trim();
+            
+            errorMessage.textContent = '';
+            errorMessage.classList.add('hidden');
+
+            if (!message || !cycleDay || !symptoms) {
+                errorMessage.textContent = 'Please enter a message, cycle day, and symptoms.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            // Disable input and show loading
+            sendButton.disabled = true;
+            const userMessage = message; // Store user message before clearing input
+            userInput.value = '';
+            loadingIndicator.classList.remove('hidden');
+            
+            // Display user's message immediately
+            addMessage(userMessage, 'user');
+
+            try {
+                // Ensure inputs are clean before sending
+                const requestBody = JSON.stringify({
+                    message: userMessage,
+                    cycleDay: cycleDay,
+                    symptoms: symptoms
+                });
+                
+                const response = await fetch(CHAT_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: requestBody,
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server responded with status ${response.status}. Details: ${errorText}`);
+                }
+
+                const data = await response.json();
+                
+                // The Java server returns {"response": "..."}
+                const aiText = data.response || "Sorry, I received an empty response.";
+                addMessage(aiText, 'ai');
+
+            } catch (error) {
+                console.error("Fetch error:", error);
+                errorMessage.textContent = `Communication Error: ${error.message}`;
+                errorMessage.classList.remove('hidden');
+                addMessage("I'm sorry, I couldn't connect to the server. Check the Java console for errors.", 'ai');
+            } finally {
+                // Re-enable input and hide loading
+                sendButton.disabled = false;
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
