@@ -4,281 +4,108 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🌸 Cycle Tracker</title>
-
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Playfair+Display:wght@600&display=swap"
-    rel="stylesheet">
-
+  <title>Cycle Tracker</title>
   <style>
-    /* 🌈 Background */
     body {
-      font-family: "Poppins", sans-serif;
-      background: linear-gradient(135deg, #ffe0f0 0%, #d4f7ff 100%);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      color: #444;
-    }
-
-    /* 💖 Tracker card */
-    .tracker {
-      background: #ffffffcc;
-      backdrop-filter: blur(12px);
-      padding: 40px 45px;
-      border-radius: 25px;
-      box-shadow: 0 10px 35px rgba(255, 182, 193, 0.4);
-      text-align: center;
-      width: 90%;
-      max-width: 440px;
-      transition: 0.3s ease;
-    }
-
-    .tracker:hover {
-      transform: scale(1.02);
-      box-shadow: 0 12px 40px rgba(255, 182, 193, 0.6);
+      font-family: system-ui, Arial;
+      max-width: 640px;
+      margin: 40px auto;
+      padding: 0 16px;
     }
 
     h1 {
-      font-family: "Playfair Display", serif;
-      font-size: 1.8rem;
-      color: #ff5f91;
-      margin-bottom: 10px;
+      margin: 0 0 10px;
     }
 
-    p.subtitle {
-      font-size: 0.95rem;
-      color: #666;
-      margin-bottom: 25px;
-    }
-
-    /* 💅 Inputs */
-    input[type="date"] {
-      border: 2px solid #ffb6c1;
-      border-radius: 12px;
-      padding: 12px;
-      margin: 10px 0 20px;
-      font-size: 1rem;
-      width: 75%;
-      text-align: center;
-      transition: 0.3s;
-      background: #fffafc;
-    }
-
-    input[type="date"]:focus {
-      border-color: #ff5f91;
-      box-shadow: 0 0 10px #ffd6e3;
-      outline: none;
+    input,
+    button {
+      padding: 8px 10px;
+      margin: 6px 0;
     }
 
     button {
-      background: linear-gradient(135deg, #ff88b7, #ff5f91);
-      border: none;
-      color: #fff;
-      font-weight: 600;
-      padding: 12px 26px;
-      border-radius: 15px;
+      font-weight: 700;
       cursor: pointer;
-      transition: 0.3s ease;
-      font-size: 1rem;
-      letter-spacing: 0.5px;
     }
 
-    button:hover {
-      transform: translateY(-3px);
-      background: linear-gradient(135deg, #ff72a2, #ff4885);
-      box-shadow: 0 6px 15px rgba(255, 128, 171, 0.5);
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
-    /* 💌 Results */
-    .result-card {
-      background: #fff0f6;
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 6px 15px rgba(255, 160, 190, 0.25);
-      margin-top: 25px;
-      text-align: left;
+    .card {
+      background: #f6f6f6;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 14px;
     }
 
-    .result-card h3 {
-      color: #ff4f81;
-      margin: 0 0 8px;
-      font-size: 1.1rem;
-    }
-
-    .result-card p {
-      margin: 6px 0;
-      color: #333;
-      font-size: 0.95rem;
-    }
-
-    /* 🌷 Calendar */
-    .calendar {
-      margin-top: 25px;
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 6px;
-      text-align: center;
-    }
-
-    .calendar div {
-      padding: 8px 0;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      color: #333;
-      background: #fff;
-      box-shadow: 0 2px 4px rgba(255, 105, 135, 0.1);
-    }
-
-    .header {
-      font-weight: bold;
-      color: #ff4f81;
-      background: none;
-      box-shadow: none;
-    }
-
-    .period {
-      background-color: #ffcce0;
-    }
-
-    .ovulation {
-      background-color: #fff7b3;
-    }
-
-    .next {
-      background-color: #ffd6eb;
-    }
-
-    .legend {
-      margin-top: 18px;
-      font-size: 0.9rem;
-      color: #555;
-      background: #fff9fb;
-      padding: 8px 12px;
-      border-radius: 12px;
-      display: inline-block;
-    }
-
-    .footer {
-      margin-top: 30px;
-      font-size: 0.8rem;
-      color: #888;
-    }
-
-    .hidden {
-      display: none;
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 12px;
+      border-radius: 8px;
+      overflow: auto;
     }
   </style>
 </head>
 
 <body>
-  <div class="tracker">
-    <h1>🌸 Cycle Tracker</h1>
-    <p class="subtitle">Stay in tune with your body 💕</p>
+  <h1>Cycle Tracker</h1>
 
+  <div class="row">
+    <label for="periodDate">Last period date:</label>
     <input type="date" id="periodDate" />
-    <br />
-    <button onclick="checkCycle()">✨ Check My Cycle</button>
-
-    <!-- Results -->
-    <div id="resultCard" class="result-card hidden">
-      <h3 id="phase"></h3>
-      <p id="cycleDay"></p>
-      <p id="nextPeriod"></p>
-    </div>
-
-    <!-- Calendar -->
-    <div class="calendar hidden" id="calendar"></div>
-
-    <!-- Legend -->
-    <div class="legend hidden" id="legend">
-      🩸 Period • 🌼 Ovulation • 💖 Next Period
-    </div>
-
-    <div class="footer">Made with love 💗</div>
+    <button id="checkBtn">Check</button>
   </div>
 
+  <div class="card">
+    <div id="human"></div>
+  </div>
+
+  <h3>Raw JSON</h3>
+  <pre id="json">{}</pre>
+
   <script>
-    async function checkCycle() {
-      const date = document.getElementById("periodDate").value;
-      const phaseEl = document.getElementById("phase");
-      const dayEl = document.getElementById("cycleDay");
-      const nextEl = document.getElementById("nextPeriod");
-      const card = document.getElementById("resultCard");
-      const calendar = document.getElementById("calendar");
-      const legend = document.getElementById("legend");
+    // ====== CONFIG ======
+    // If your HTML is served by the Java server (same-origin), use RELATIVE fetch:
+    const USE_RELATIVE = true;
 
-      if (!date) {
-        alert("Please select your last period date 🌷");
-        return;
-      }
+    async function check() {
+      const date = document.getElementById('periodDate').value || new Date().toISOString().slice(0, 10);
+      const url = USE_RELATIVE
+        ? `/cycle?last=${encodeURIComponent(date)}`
+        : `http://localhost:8000/cycle?last=${encodeURIComponent(date)}`; // use actual backend port if different
 
-      phaseEl.textContent = "Checking...";
-      card.classList.remove("hidden");
-      calendar.classList.add("hidden");
-      legend.classList.add("hidden");
-      calendar.innerHTML = "";
+      const jsonPre = document.getElementById('json');
+      const human = document.getElementById('human');
+      jsonPre.textContent = 'Loading...';
 
       try {
-        const response = await fetch(`http://localhost:8000/cycle?last=${date}`);
-        const data = await response.json();
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
 
-        // Display cycle details
-        phaseEl.textContent = `${data.phase}`;
-        dayEl.textContent = `📅 Cycle Day: ${data.day}`;
-        nextEl.textContent = `🩸 Next Period: ${data.nextPeriod}`;
-        card.classList.remove("hidden");
+        // Pretty JSON
+        jsonPre.textContent = JSON.stringify(data, null, 2);
 
-        buildCalendar(date, data.nextPeriod);
-        legend.classList.remove("hidden");
-      } catch (err) {
-        phaseEl.textContent = "❌ Could not connect to backend.";
-        dayEl.textContent = "";
-        nextEl.textContent = "";
+        // Human summary
+        human.innerHTML = `
+          <div><strong>Start:</strong> ${data.last}</div>
+          <div><strong>Day:</strong> ${data.day}</div>
+          <div><strong>Phase:</strong> ${data.phase}</div>
+          <div><strong>Next period:</strong> ${data.nextPeriod}</div>
+          ${data.symptoms ? `<div style="margin-top:8px">${data.symptoms}</div>` : ""}
+        `;
+      } catch (e) {
+        jsonPre.textContent = `Error connecting to backend: ${e}`;
+        human.textContent = '';
       }
     }
 
-    function buildCalendar(periodStart, nextPeriod) {
-      const calendarDiv = document.getElementById("calendar");
-      const start = new Date(periodStart);
-      const next = new Date(nextPeriod);
-      const ovulation = new Date(start.getTime() + 14 * 86400000);
-      const days = ["S", "M", "T", "W", "T", "F", "S"];
-
-      for (const d of days) {
-        const div = document.createElement("div");
-        div.textContent = d;
-        div.classList.add("header");
-        calendarDiv.appendChild(div);
-      }
-
-      for (let i = 0; i < 30; i++) {
-        const day = new Date(start.getTime() + i * 86400000);
-        const cell = document.createElement("div");
-        cell.textContent = day.getDate();
-
-        if (sameDay(day, start)) cell.classList.add("period");
-        else if (sameDay(day, ovulation)) cell.classList.add("ovulation");
-        else if (sameDay(day, next)) cell.classList.add("next");
-
-        calendarDiv.appendChild(cell);
-      }
-
-      calendarDiv.classList.remove("hidden");
-    }
-
-    function sameDay(d1, d2) {
-      return (
-        d1.getFullYear() === d2.getFullYear() &&
-        d1.getMonth() === d2.getMonth() &&
-        d1.getDate() === d2.getDate()
-      );
-    }
+    document.getElementById('checkBtn').addEventListener('click', check);
   </script>
 </body>
 
