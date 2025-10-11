@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cycle Tracker</title>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, Arial, sans-serif;
+      background-color: #fce4ec;
+      max-width: 640px;
+      margin: 40px auto;
+      padding: 0 16px;
+      color: #333;
+    }
+    h1 {
+      margin: 0 0 10px;
+      color: #d81b60;
+      font-weight: 700;
+      text-align: center;
+    }
+    input, button {
+      padding: 10px 12px;
+      margin: 6px 0;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-size: 15px;
+      font-family: inherit;
+    }
+    input:focus {
+      outline: none;
+      border-color: #e91e63;
+      box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.2);
+    }
+    button {
+      background: #e91e63;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+    button:hover {
+      background: #d81b60;
+      transform: translateY(-1px);
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-top: 16px;
+      box-shadow: 0 4px 8px rgba(216, 27, 96, 0.1);
+    }
+    strong { color: #d81b60; }
+    .footer {
+      text-align: center;
+      color: #666;
+      font-size: 13px;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cycle Tracker</h1>
+
+  <div class="row">
+    <label for="periodDate">When did your period start?:</label>
+    <input type="date" id="periodDate" />
+    <button id="checkBtn">Enter</button>
+  </div>
+
+  <div class="card" id="human">Select a date and click <strong>Enter</strong>.</div>
+
+
+  <script>
+    const USE_RELATIVE = true;
+
+    async function check() {
+      const date = document.getElementById('periodDate').value || new Date().toISOString().slice(0,10);
+      const url = USE_RELATIVE
+        ? `/cycle?last=${encodeURIComponent(date)}`
+        : `http://localhost:8000/cycle?last=${encodeURIComponent(date)}`;
+
+      const human = document.getElementById('human');
+      human.textContent = 'Loading...';
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        human.innerHTML = `
+          <div><strong>Period Start Date: </strong> ${data.last}</div>
+          <div><strong>Cycle Day: </strong> ${data.day}</div>
+          <div><strong>Cycle Phase: </strong> ${data.phase}</div>
+          <div><strong>Expected Date For Next period: </strong> ${data.nextPeriod}</div>
+          <div><strong>Symptoms You May Expect: </strong>${data.symptoms}</div>
+        `;
+      } catch (e) {
+        human.textContent = `Error connecting to backend: ${e}`;
+      }
+    }
+
+    document.getElementById('checkBtn').addEventListener('click', check);
+  </script>
+</body>
+</html>

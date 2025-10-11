@@ -1,8 +1,11 @@
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Executors;
 
 public class MainServer {
@@ -40,7 +43,7 @@ public class MainServer {
             exchange.close();
         });
 
-        // Chatbot API endpoint
+        // ✅ Chatbot API endpoint
         server.createContext("/api/chat", exchange -> {
             exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
             exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -54,7 +57,7 @@ public class MainServer {
             if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
                 try {
                     String body = new String(exchange.getRequestBody().readAllBytes());
-                    String responseJson = ChatBot.processChatRequest(body);
+                    String responseJson = processChatRequest(body);
 
                     exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
                     byte[] bytes = responseJson.getBytes("UTF-8");
@@ -70,9 +73,67 @@ public class MainServer {
             exchange.close();
         });
 
+        // ✅ New: Cycle tracking endpoint
+        server.createContext("/cycle", new CycleHandler());
+
         server.start();
     }
 
+    // ===================== NEW HANDLER =====================
+    static class CycleHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+
+            String query = exchange.getRequestURI().getQuery();
+            if (query == null || !query.startsWith("last=")) {
+                sendErrorResponse(exchange, 400, "Missing ?last=YYYY-MM-DD");
+                return;
+            }
+
+            String lastDate = query.substring(5);
+            try {
+                LocalDate start = LocalDate.parse(lastDate);
+                LocalDate today = LocalDate.now();
+                long day = ChronoUnit.DAYS.between(start, today) + 1;
+                if (day < 1) day = 1;
+                long cycleLength = 28;
+                LocalDate nextPeriod = start.plusDays(cycleLength);
+
+                // Determine cycle phase
+                String phase;
+                if (day <= 5) phase = "Menstrual";
+                else if (day <= 13) phase = "Follicular";
+                else if (day <= 17) phase = "Ovulation";
+                else if (day <= 28) phase = "Luteal";
+                else phase = "Menstrual";
+
+                String symptoms = switch (phase) {
+                    case "Menstrual" -> "Cramps, fatigue, mood changes";
+                    case "Follicular" -> "Rising energy, clear skin, improved mood";
+                    case "Ovulation" -> "Bloating, high libido, light cramps";
+                    case "Luteal" -> "Tender breasts, irritability, food cravings";
+                    default -> "Mild changes";
+                };
+
+                String json = String.format(
+                    "{\"last\":\"%s\",\"day\":%d,\"phase\":\"%s\",\"nextPeriod\":\"%s\",\"symptoms\":\"%s\"}",
+                    lastDate, day, phase, nextPeriod, symptoms
+                );
+
+                byte[] bytes = json.getBytes("UTF-8");
+                exchange.sendResponseHeaders(200, bytes.length);
+                exchange.getResponseBody().write(bytes);
+            } catch (Exception e) {
+                sendErrorResponse(exchange, 400, "Invalid date format. Use YYYY-MM-DD");
+            } finally {
+                exchange.close();
+            }
+        }
+    }
+
+    // ===================== EXISTING HELPERS =====================
     private static void sendErrorResponse(HttpExchange exchange, int status, String message) throws IOException {
         exchange.getResponseHeaders().set("Content-Type", "text/plain");
         byte[] msg = message.getBytes();
@@ -85,7 +146,6 @@ public class MainServer {
         if (path.endsWith(".html")) return "text/html";
         if (path.endsWith(".css")) return "text/css";
         if (path.endsWith(".js")) return "application/javascript";
-        if (path.endsWith(".png")) return "image/png";
         if (path.endsWith(".jpg") || path.endsWith(".jpeg")) return "image/jpeg";
         return "text/plain";
     }
@@ -104,7 +164,6 @@ public class MainServer {
         return "{\"response\": \"" + escapeJsonStatic(aiResponse) + "\"}";
     }
 
-    // Static helpers for crude JSON parsing
     private static String extractValueStatic(String json, String key) {
         String search = "\"" + key + "\":\"";
         int startIndex = json.indexOf(search);

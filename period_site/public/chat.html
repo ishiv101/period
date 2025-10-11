@@ -52,9 +52,11 @@
         <div id="chat-container" class="chat-container p-4 flex-grow flex flex-col space-y-3">
             <!-- Initial welcome message -->
             <div class="flex justify-start">
-                <div class="bg-primary-pink text-white p-3 rounded-tr-xl rounded-bl-xl rounded-br-xl max-w-xs md:max-w-md shadow">
-                    Welcome! I'm your Period Pal. To give you the best advice, please enter your current **Cycle Day** and **Symptoms** below, and then ask me a question!
-                </div>
+            <div class="bg-primary-pink text-white p-3 rounded-tr-xl rounded-bl-xl rounded-br-xl max-w-xs md:max-w-md shadow">
+                Welcome! I'm your Period Pal.
+                Today is day <strong id="greeting-day"></strong> of your cycle.
+                Potential symptoms: <strong id="greeting-symptoms"></strong>.
+                How can I help you today?
             </div>
         </div>
 
@@ -66,17 +68,6 @@
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 Thinking...
-            </div>
-            
-            <div class="flex flex-wrap gap-3 mb-3">
-                <div class="flex-1 min-w-[45%]">
-                    <label for="cycleDay" class="block text-xs font-medium text-gray-700">Current Cycle Day (1-35):</label>
-                    <input type="number" id="cycleDay" placeholder="e.g., 20" min="1" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary-pink focus:border-primary-pink shadow-sm">
-                </div>
-                <div class="flex-1 min-w-[45%]">
-                    <label for="symptoms" class="block text-xs font-medium text-gray-700">Key Symptoms (separate by comma):</label>
-                    <input type="text" id="symptoms" placeholder="e.g., cramps, bloating, fatigue" class="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-primary-pink focus:border-primary-pink shadow-sm">
-                </div>
             </div>
 
             <div class="flex space-x-2">
@@ -96,11 +87,14 @@
         // DOM Elements
         const chatContainer = document.getElementById('chat-container');
         const userInput = document.getElementById('userInput');
-        const cycleDayInput = document.getElementById('cycleDay');
-        const symptomsInput = document.getElementById('symptoms');
         const sendButton = document.getElementById('sendButton');
         const loadingIndicator = document.getElementById('loading-indicator');
         const errorMessage = document.getElementById('error-message');
+
+        const cycleDayFromCalendar = 20; 
+        const symptomsFromCalendar = "cramps, bloating";
+        document.getElementById('greeting-day').textContent = cycleDayFromCalendar || "?";
+        document.getElementById('greeting-symptoms').textContent = symptomsFromCalendar || "none";
 
         /**
          * Adds a chat message bubble to the display.
@@ -143,14 +137,14 @@
          */
         async function sendMessage() {
             const message = userInput.value.trim();
-            const cycleDay = cycleDayInput.value.trim();
-            const symptoms = symptomsInput.value.trim();
+            const cycleDay = cycleDayFromCalendar;
+            const symptoms = symptomsFromCalendar;
             
             errorMessage.textContent = '';
             errorMessage.classList.add('hidden');
 
             if (!message || !cycleDay || !symptoms) {
-                errorMessage.textContent = 'Please enter a message, cycle day, and symptoms.';
+                errorMessage.textContent = 'Please enter a message.';
                 errorMessage.classList.remove('hidden');
                 return;
             }
@@ -168,8 +162,6 @@
                 // Ensure inputs are clean before sending
                 const requestBody = JSON.stringify({
                     message: userMessage,
-                    cycleDay: cycleDay,
-                    symptoms: symptoms
                 });
                 
                 const response = await fetch(CHAT_ENDPOINT, {
