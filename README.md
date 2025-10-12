@@ -1,7 +1,28 @@
-# period
-Elevated Period Tracking App (for women, made by women) 
-Mission Statement: We noticed that most period tracking apps lack the personalization and sense of community that women deserve, and often place essential information behind a paywall. Our goal is to create a supportive, accessible space that provides accurate information and genuine connection, helping every woman feel informed and understood.
+# Period Pal - Cycle Tracker & Chatbot
 
-Process: In the main folder period_site we have a frontend folder called public with html files 
+**Period Pal** is a web application designed to help users track their menstrual cycles and interact with a friendly AI chatbot for guidance on potential symptoms and cycle-related insights.
 
-AI Usage: We used the aid of AI like ChatGPT, and Google Gemini API
+## Features
+
+- Track your period start date, current cycle day, and cycle phase.
+- View expected dates for your next period and common symptoms for each phase.
+- Chat with an AI-powered assistant for personalized tips and support.
+- Mobile-friendly, responsive design built with Tailwind CSS.
+
+## AI Usage
+
+The chatbot uses the **Gemini AI API** to provide friendly, non-diagnostic advice related to menstrual health. It processes user messages along with cycle information to generate context-aware responses.
+
+## Tech Stack
+
+- Frontend: HTML, Tailwind CSS, JavaScript
+- Backend: Java (handles API calls to Gemini AI)
+- AI: Gemini AI API for conversational responses
+
+## Notes
+
+- This application **does not provide medical advice**. For health concerns, consult a qualified professional.
+
+## Acknowledgements
+
+We used **ChatGPT** during development to assist with planning, writing, and debugging both frontend and backend code, helping streamline the creation of this application.
