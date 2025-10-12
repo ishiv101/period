@@ -48,10 +48,51 @@
       padding: 10px 15px;
       margin-top: 10px;
     }
+
+        /* ---- Centered Image ---- */
+    .image-container {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .image-container img {
+      width: 300px; /* adjust as you like */
+      border-radius: 10px;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* ---- Back Button (match chat.html) ---- */
+  .back-button {
+    display: inline-block;
+    background: #e91e63;
+    color: white;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 8px 14px;
+    text-decoration: none;
+    margin-bottom: 10px;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .back-button:hover {
+    background: #d81b60;
+    transform: translateY(-1px);
+  }
   </style>
 </head>
 <body>
   <h1>Period Information</h1>
+
+  <!-- Back to Home Button at Top -->
+  <div class="button-container">
+    <a href="calendar.html" class="back-button">← Back to Home</a>
+  </div>
+
+ <!-- Centered Image -->
+  <div class="image-container">
+    <img src="https://www.menstrupedia.com/assets/quickguide/physiology/pysiology-menstrual-phases.jpg" 
+         alt="Menstrual Cycle Diagram">
+  </div>
+
 
   <div class="phase">
     <h2>What is a period?</h2>
@@ -167,6 +208,6 @@
       </ul>
     </div>
   </div>
-
+   
 </body>
 </html>

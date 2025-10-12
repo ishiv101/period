@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LunaCycle — Diary</title>
+  <style>
+    :root { --pink: #e91e63; --berry: #d81b60; --bg: #fce4ec; --ink:#333; }
+    body {
+      font-family: 'Inter', system-ui, Arial, sans-serif;
+      background: var(--bg); color: var(--ink);
+      margin: 0; padding: 24px 16px;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom: 16px;}
+    .home { text-decoration:none; background:#fff; color:var(--berry); font-weight:700; padding:8px 12px; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,.08);}
+    h1 { color: var(--berry); margin: 8px 0 14px; font-size: 28px; }
+    .card {
+      background: #fff; border-radius: 14px; padding: 16px 18px;
+      box-shadow: 0 8px 18px rgba(216,27,96,.10); margin: 14px 0;
+    }
+    .snap .row { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width:640px) { .snap .row { grid-template-columns: 1fr; } }
+    .snap strong { color: var(--berry); }
+    label { font-weight:700; color:#444; }
+    textarea, input {
+      width:100%; box-sizing:border-box; margin-top:8px; font:inherit;
+      border:1px solid #ddd; border-radius:10px; padding:10px 12px;
+    }
+    textarea:focus, input:focus { outline:none; border-color: var(--pink); box-shadow: 0 0 0 3px rgba(233,30,99,.18); }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    button {
+      background: var(--pink); color:#fff; border:none; border-radius:10px;
+      padding:10px 16px; font-weight:700; cursor:pointer;
+      transition: transform .08s ease, background .2s ease;
+    }
+    button:hover { background: var(--berry); transform: translateY(-1px); }
+    .muted { color:#666; font-size: 13px; }
+    /* Diary list */
+    .entry {
+      border: 1px solid #f3c2d2; border-radius: 12px; padding: 12px 14px; margin: 12px 0;
+      background: #fffdfd;
+    }
+    .entry .head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .entry .head .title { font-weight:800; color: var(--berry); }
+    .entry small { color:#777; }
+    .pill {
+      display:inline-block; background: var(--pink); color:#fff; font-size:12px; border-radius: 999px; padding: 2px 8px; margin-left: 8px;
+    }
+    .meta { color:#444; font-size: 14px; margin: 8px 0 6px; }
+    .entry p { margin: 8px 0 0; white-space: pre-wrap; }
+    .right { text-align:right; }
+    .del {
+      background: #f7e0e9; color:#b32653; border: 1px solid #f0b9cc; padding: 6px 10px;
+    }
+    .del:hover { background: #f4cada; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <a class="home" href="calendar.html">← Home</a>
+      <div class="muted">Your private diary (saved in your browser)</div>
+    </div>
+    <h1>Cycle Diary</h1>
+
+    <!-- Snapshot from calendar/endpoint -->
+    <div class="card snap" id="snapshot">
+      <div class="muted" id="snapStatus">Loading your latest cycle info…</div>
+      <div class="row" id="snapGrid" style="display:none;">
+        <div><strong>Period Start Date:</strong> <span id="s_last"></span></div>
+        <div><strong>Cycle Day:</strong> <span id="s_day"></span></div>
+        <div><strong>Cycle Phase:</strong> <span id="s_phase"></span></div>
+        <div><strong>Expected Next Period:</strong> <span id="s_next"></span></div>
+        <div style="grid-column: 1 / -1;"><strong>Symptoms You May Expect:</strong> <span id="s_symptoms"></span></div>
+      </div>
+    </div>
+
+    <!-- New diary entry -->
+    <div class="card">
+      <label for="note">Today's note</label>
+      <textarea id="note" rows="5" placeholder="How are you feeling today? Any symptoms, mood, workouts, foods that helped?"></textarea>
+      <div class="actions">
+        <button id="saveBtn">Add to Diary</button>
+        <span class="muted" id="saveStatus"></span>
+      </div>
+      <div class="muted" style="margin-top:6px;">The snapshot above will be attached to this entry.</div>
+    </div>
+
+    <!-- Diary list -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <strong>Your Entries</strong>
+        <button id="clearAllBtn" class="del" title="Delete all entries">Clear all</button>
+      </div>
+      <div id="entries"></div>
+    </div>
+  </div>
+
+  <script>
+    // Keys
+    const LS_LAST = 'lastPeriodDate';         // set by calendar.html
+    const LS_DIARY = 'luna_diary_entries';    // our diary storage
+
+    // Elements
+    const snapStatus = document.getElementById('snapStatus');
+    const snapGrid   = document.getElementById('snapGrid');
+    const s_last     = document.getElementById('s_last');
+    const s_day      = document.getElementById('s_day');
+    const s_phase    = document.getElementById('s_phase');
+    const s_next     = document.getElementById('s_next');
+    const s_symptoms = document.getElementById('s_symptoms');
+    const noteEl     = document.getElementById('note');
+    const saveBtn    = document.getElementById('saveBtn');
+    const saveStatus = document.getElementById('saveStatus');
+    const entriesDiv = document.getElementById('entries');
+    const clearAllBtn= document.getElementById('clearAllBtn');
+
+    // State of the latest snapshot
+    let snapshot = null;
+
+    // Load latest cycle info from backend using date saved by calendar.html
+    async function loadSnapshot() {
+      const lastDate = localStorage.getItem(LS_LAST);
+      if (!lastDate) {
+        snapStatus.textContent = 'No date selected yet. Go to Home to enter your period start date.';
+        return;
+      }
+      snapStatus.textContent = 'Loading…';
+      try {
+        // same origin endpoint: /cycle?last=YYYY-MM-DD
+        const res = await fetch(`/cycle?last=${encodeURIComponent(lastDate)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        snapshot = {
+          last: data.last || lastDate,
+          day: data.day ?? '',
+          phase: data.phase || '',
+          nextPeriod: data.nextPeriod || '',
+          symptoms: data.symptoms || ''
+        };
+
+        s_last.textContent = snapshot.last;
+        s_day.textContent = snapshot.day;
+        s_phase.textContent = snapshot.phase;
+        s_next.textContent = snapshot.nextPeriod;
+        s_symptoms.textContent = snapshot.symptoms;
+
+        snapStatus.style.display = 'none';
+        snapGrid.style.display = '';
+      } catch (e) {
+        console.error(e);
+        snapStatus.textContent = 'Failed to load cycle info. Please try again from Home.';
+      }
+    }
+
+    // Diary storage helpers
+    function readEntries() {
+      try { return JSON.parse(localStorage.getItem(LS_DIARY) || '[]'); }
+      catch { return []; }
+    }
+    function writeEntries(arr) {
+      localStorage.setItem(LS_DIARY, JSON.stringify(arr));
+    }
+
+    // Render diary
+    function renderEntries() {
+      const arr = readEntries().sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+      if (!arr.length) {
+        entriesDiv.innerHTML = '<div class="muted">No entries yet. Add your first note above.</div>';
+        return;
+      }
+      entriesDiv.innerHTML = '';
+      arr.forEach((e, idx) => {
+        const el = document.createElement('div');
+        el.className = 'entry';
+
+        const when = new Date(e.createdAt);
+        const title = `Entry for ${when.toLocaleDateString()} ${when.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`;
+
+        el.innerHTML = `
+          <div class="head">
+            <div class="title">${escapeHtml(title)}
+              ${e.phase ? `<span class="pill">${escapeHtml(e.phase)}</span>` : ''}
+            </div>
+            <button class="del" data-i="${idx}">Delete</button>
+          </div>
+          <div class="meta">
+            ${e.last ? `<strong>Start:</strong> ${escapeHtml(e.last)} · ` : ''}
+            ${e.day ? `<strong>Day:</strong> ${escapeHtml(String(e.day))} · ` : ''}
+            ${e.nextPeriod ? `<strong>Next:</strong> ${escapeHtml(e.nextPeriod)} · ` : ''}
+            ${e.symptoms ? `<strong>Symptoms:</strong> ${escapeHtml(e.symptoms)}` : ''}
+          </div>
+          ${e.note ? `<p>${escapeHtml(e.note)}</p>` : '<p class="muted">No note.</p>'}
+        `;
+        entriesDiv.appendChild(el);
+      });
+
+      // bind deletes
+      entriesDiv.querySelectorAll('.del').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const i = Number(btn.getAttribute('data-i'));
+          const arr2 = readEntries();
+          arr2.splice(i, 1);
+          writeEntries(arr2);
+          renderEntries();
+        });
+      });
+    }
+
+    // Add entry
+    function addEntry() {
+      saveStatus.textContent = '';
+      const note = noteEl.value.trim();
+      if (!snapshot) {
+        saveStatus.textContent = 'No cycle snapshot loaded yet.';
+        return;
+      }
+      const entry = {
+        createdAt: new Date().toISOString(),
+        last: snapshot.last,
+        day: snapshot.day,
+        phase: snapshot.phase,
+        nextPeriod: snapshot.nextPeriod,
+        symptoms: snapshot.symptoms,
+        note
+      };
+      const arr = readEntries();
+      arr.push(entry);
+      writeEntries(arr);
+      noteEl.value = '';
+      saveStatus.textContent = 'Saved!';
+      renderEntries();
+      setTimeout(() => saveStatus.textContent = '', 1200);
+    }
+
+    // Clear all
+    function clearAll() {
+      if (!confirm('Delete ALL diary entries?')) return;
+      writeEntries([]);
+      renderEntries();
+    }
+
+    // Utilities
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;');
+    }
+
+    // Init
+    saveBtn.addEventListener('click', addEntry);
+    clearAllBtn.addEventListener('click', clearAll);
+    loadSnapshot().then(renderEntries);
+  </script>
+</body>
+</html>

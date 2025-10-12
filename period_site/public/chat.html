@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Period Pal: Cycle Chatbot</title>
+    <title>Luna: Your Cycle Chatbot</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -31,36 +31,41 @@
             overflow-y: auto;
             scroll-behavior: smooth;
         }
-        /* Custom scrollbar for aesthetics */
         .chat-container::-webkit-scrollbar { width: 8px; }
         .chat-container::-webkit-scrollbar-thumb { background-color: #f06292; border-radius: 4px; }
+
+        .back-button {
+      background: #e91e63;
+      color: white;
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 8px 14px;
+      text-decoration: none;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+    .back-button:hover {
+      background: #d81b60;
+      transform: translateY(-1px);
+    }
     </style>
 </head>
 <body class="bg-bg-light min-h-screen flex items-center justify-center font-sans p-4">
 
+    <a href="calendar.html" class="back-button self-start mb-2">← Back to Home</a>
+
     <div class="w-full max-w-2xl bg-white shadow-2xl rounded-xl overflow-hidden flex flex-col h-[90vh]">
         
-        <!-- Header -->
         <header class="bg-secondary-berry text-white p-4 flex items-center rounded-t-xl">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <h1 class="text-xl font-bold">Period Pal Chatbot</h1>
+            <h1 class="text-xl font-bold">Luna: Your Cycle Chatbot</h1>
         </header>
 
-        <!-- Chat Display Area -->
         <div id="chat-container" class="chat-container p-4 flex-grow flex flex-col space-y-3">
-            <!-- Initial welcome message -->
-            <div class="flex justify-start">
-            <div class="bg-primary-pink text-white p-3 rounded-tr-xl rounded-bl-xl rounded-br-xl max-w-xs md:max-w-md shadow">
-                Welcome! I'm your Period Pal.
-                Today is day <strong id="greeting-day"></strong> of your cycle.
-                Potential symptoms: <strong id="greeting-symptoms"></strong>.
-                How can I help you today?
-            </div>
+            <!-- Initial greeting will be inserted here dynamically -->
         </div>
 
-        <!-- Input Area (Cycle Info + Message) -->
         <div class="p-4 border-t border-gray-200">
             <div id="loading-indicator" class="text-secondary-berry text-sm mb-2 hidden">
                 <svg class="animate-spin -ml-1 mr-3 h-5 w-5 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -71,7 +76,7 @@
             </div>
 
             <div class="flex space-x-2">
-                <input type="text" id="userInput" placeholder="Ask your Period Pal a question..." class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-primary-pink focus:border-primary-pink shadow-inner" onkeydown="if(event.key === 'Enter') sendMessage()">
+                <input type="text" id="userInput" placeholder="Ask Luna a question..." class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-primary-pink focus:border-primary-pink shadow-inner" onkeydown="if(event.key === 'Enter') sendMessage()">
                 <button id="sendButton" onclick="sendMessage()" class="bg-primary-pink hover:bg-secondary-berry text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200 disabled:opacity-50">
                     Send
                 </button>
@@ -81,115 +86,75 @@
     </div>
 
     <script>
-        // Server details
         const CHAT_ENDPOINT = 'http://localhost:8080/api/chat';
-        
-        // DOM Elements
         const chatContainer = document.getElementById('chat-container');
         const userInput = document.getElementById('userInput');
         const sendButton = document.getElementById('sendButton');
         const loadingIndicator = document.getElementById('loading-indicator');
         const errorMessage = document.getElementById('error-message');
 
-        const cycleDayFromCalendar = 20; 
-        const symptomsFromCalendar = "cramps, bloating";
-        document.getElementById('greeting-day').textContent = cycleDayFromCalendar || "?";
-        document.getElementById('greeting-symptoms').textContent = symptomsFromCalendar || "none";
-
-        /**
-         * Adds a chat message bubble to the display.
-         * @param {string} message - The text content of the message.
-         * @param {string} sender - 'user' or 'ai'.
-         */
+        // Add chat bubble function
         function addMessage(message, sender) {
             const messageElement = document.createElement('div');
             messageElement.classList.add('flex', sender === 'user' ? 'justify-end' : 'justify-start');
-            
             const bubble = document.createElement('div');
-            bubble.classList.add(
-                'p-3',
-                'rounded-xl',
-                'max-w-xs',
-                'md:max-w-md',
-                'shadow'
-            );
-
-            if (sender === 'user') {
-                bubble.classList.add('bg-secondary-berry', 'text-white', 'rounded-tr-none');
-            } else {
-                bubble.classList.add('bg-gray-100', 'text-gray-800', 'rounded-tl-none', 'whitespace-pre-wrap');
-                
-                // Convert AI suggestions (bullet points) to a nice list
-                message = message.replace(/\n[•*-]\s*/g, '\n');
-                message = message.replace("\\*\\*(.*?)\\*\\*", "$1");
-            }
-
+            bubble.classList.add('p-3','rounded-xl','max-w-xs','md:max-w-md','shadow');
+            if(sender==='user') bubble.classList.add('bg-secondary-berry','text-white','rounded-tr-none');
+            else bubble.classList.add('bg-gray-100','text-gray-800','rounded-tl-none','whitespace-pre-wrap');
             bubble.innerHTML = marked.parse(message);
             messageElement.appendChild(bubble);
             chatContainer.appendChild(messageElement);
-            
-            // Scroll to the bottom to show the new message
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        /**
-         * Main function to send the message to the Java backend.
-         */
-        async function sendMessage() {
-            const message = userInput.value.trim();
-            const cycleDay = cycleDayFromCalendar;
-            const symptoms = symptomsFromCalendar;
-            
-            errorMessage.textContent = '';
-            errorMessage.classList.add('hidden');
+        // Fetch cycle info and display greeting
+        window.addEventListener("DOMContentLoaded", async () => {
+            const lastPeriod = localStorage.getItem("lastPeriodDate");
+            let cycleDay = "?";
+            let symptoms = "unknown";
 
-            if (!message || !cycleDay || !symptoms) {
-                errorMessage.textContent = 'Please enter a message.';
-                errorMessage.classList.remove('hidden');
-                return;
+            if(lastPeriod) {
+                try {
+                    //const res = await fetch(`http://localhost:8080/api/cycle?last=${encodeURIComponent(lastPeriod)}`);
+                    const res = await fetch(`/cycle?last=${encodeURIComponent(lastPeriod)}`);
+                    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+                    cycleDay = data.day;
+                    symptoms = data.symptoms;
+                } catch(e) {
+                    console.error("Cycle info fetch failed:", e);
+                }
             }
 
-            // Disable input and show loading
+            // Add initial greeting bubble dynamically
+            addMessage(`Welcome! I'm Luna. Today is day **${cycleDay}** of your cycle. Potential symptoms: **${symptoms}**. How can I help you today?`, 'ai');
+        });
+
+        // Send message function
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if(!message) return;
+
             sendButton.disabled = true;
-            const userMessage = message; // Store user message before clearing input
+            errorMessage.classList.add('hidden');
             userInput.value = '';
             loadingIndicator.classList.remove('hidden');
-            
-            // Display user's message immediately
-            addMessage(userMessage, 'user');
+            addMessage(message, 'user');
 
             try {
-                // Ensure inputs are clean before sending
-                const requestBody = JSON.stringify({
-                    message: userMessage,
-                });
-                
+                const lastPeriod = localStorage.getItem("lastPeriodDate") || "2025-10-01";
                 const response = await fetch(CHAT_ENDPOINT, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: requestBody,
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({message,lastPeriod})
                 });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Server responded with status ${response.status}. Details: ${errorText}`);
-                }
-
+                if(!response.ok) throw new Error(`Server responded with status ${response.status}`);
                 const data = await response.json();
-                
-                // The Java server returns {"response": "..."}
-                const aiText = data.response || "Sorry, I received an empty response.";
-                addMessage(aiText, 'ai');
-
-            } catch (error) {
-                console.error("Fetch error:", error);
-                errorMessage.textContent = `Communication Error: ${error.message}`;
-                errorMessage.classList.remove('hidden');
-                addMessage("I'm sorry, I couldn't connect to the server. Check the Java console for errors.", 'ai');
+                addMessage(data.response || "Sorry, I received an empty response.", 'ai');
+            } catch(error) {
+                console.error(error);
+                addMessage("I'm sorry, I couldn't connect to the server.", 'ai');
             } finally {
-                // Re-enable input and hide loading
                 sendButton.disabled = false;
                 loadingIndicator.classList.add('hidden');
             }

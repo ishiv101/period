@@ -12,7 +12,6 @@ public class MainServer {
     public static void main(String[] args) throws Exception {
         int port = 8080;
 
-        // Check for required system property (your API key)
         if (System.getProperty("GEMINI_API") == null || System.getProperty("GEMINI_API").isEmpty()) {
             System.err.println("FATAL: You must start with: java -DGEMINI_API=your_api_key MainServer");
             return;
@@ -26,7 +25,7 @@ public class MainServer {
         // Serve static files
         server.createContext("/", exchange -> {
             String path = exchange.getRequestURI().getPath();
-            if (path.equals("/")) path = "/index.html";
+            if (path.equals("/")) path = "/calendar.html";
 
             File file = new File("public" + path);
             if (file.exists() && !file.isDirectory()) {
@@ -43,7 +42,7 @@ public class MainServer {
             exchange.close();
         });
 
-        // ✅ Chatbot API endpoint
+        // Chatbot API endpoint
         server.createContext("/api/chat", exchange -> {
             exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
             exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -57,7 +56,16 @@ public class MainServer {
             if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
                 try {
                     String body = new String(exchange.getRequestBody().readAllBytes());
-                    String responseJson = processChatRequest(body);
+
+                    // Extract lastPeriod from the request JSON
+                    String lastPeriod = extractValueStatic(body, "lastPeriod");
+                    if (lastPeriod.isEmpty()) lastPeriod = "2025-10-01"; // fallback
+
+                    // Compute cycle info using that date
+                    CycleInfo info = CycleHandler.getCycleInfo(lastPeriod);
+
+                    // Pass cycle info to the ChatBot
+                    String responseJson = ChatBot.processChatRequest(body, info);
 
                     exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
                     byte[] bytes = responseJson.getBytes("UTF-8");
@@ -73,13 +81,49 @@ public class MainServer {
             exchange.close();
         });
 
-        // ✅ New: Cycle tracking endpoint
+        // Cycle tracking endpoint
         server.createContext("/cycle", new CycleHandler());
+
+        // API endpoint to expose cycle info
+        server.createContext("/api/cycleinfo", exchange -> {
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+
+            // Using fallback date for now (can replace with stored date later)
+            CycleInfo info = CycleHandler.getCycleInfo("2025-10-01");
+            String responseJson = String.format(
+                "{\"cycleDay\":\"%d\",\"symptoms\":\"%s\"}",
+                info.day,
+                info.symptoms
+            );
+            byte[] bytes = responseJson.getBytes();
+            exchange.sendResponseHeaders(200, bytes.length);
+            exchange.getResponseBody().write(bytes);
+            exchange.close();
+        });
 
         server.start();
     }
 
-    // ===================== NEW HANDLER =====================
+    public static class CycleInfo {
+        public int day;
+        public String symptoms;
+        public String phase;
+        public String nextPeriod;
+
+        public CycleInfo(int day, String symptoms, String phase, String nextPeriod) {
+            this.day = day;
+            this.symptoms = symptoms;
+            this.phase = phase;
+            this.nextPeriod = nextPeriod;
+        }
+
+        public int getDay() { return day; }
+        public String getSymptoms() { return symptoms; }
+        public String getPhase() { return phase; }
+        public String getNextPeriod() { return nextPeriod; }
+    }
+
     static class CycleHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -94,33 +138,12 @@ public class MainServer {
 
             String lastDate = query.substring(5);
             try {
-                LocalDate start = LocalDate.parse(lastDate);
-                LocalDate today = LocalDate.now();
-                long day = ChronoUnit.DAYS.between(start, today) + 1;
-                if (day < 1) day = 1;
-                long cycleLength = 28;
-                LocalDate nextPeriod = start.plusDays(cycleLength);
-
-                // Determine cycle phase
-                String phase;
-                if (day <= 5) phase = "Menstrual";
-                else if (day <= 13) phase = "Follicular";
-                else if (day <= 17) phase = "Ovulation";
-                else if (day <= 28) phase = "Luteal";
-                else phase = "Menstrual";
-
-                String symptoms = switch (phase) {
-                    case "Menstrual" -> "Cramps, fatigue, mood changes";
-                    case "Follicular" -> "Rising energy, clear skin, improved mood";
-                    case "Ovulation" -> "Bloating, high libido, light cramps";
-                    case "Luteal" -> "Tender breasts, irritability, food cravings";
-                    default -> "Mild changes";
-                };
+                MainServer.CycleInfo info = getCycleInfo(lastDate);
 
                 String json = String.format(
                     "{\"last\":\"%s\",\"day\":%d,\"phase\":\"%s\",\"nextPeriod\":\"%s\",\"symptoms\":\"%s\"}",
-                    lastDate, day, phase, nextPeriod, symptoms
-                );
+                    lastDate, info.day, info.phase, info.nextPeriod, info.symptoms
+             );
 
                 byte[] bytes = json.getBytes("UTF-8");
                 exchange.sendResponseHeaders(200, bytes.length);
@@ -131,9 +154,34 @@ public class MainServer {
                 exchange.close();
             }
         }
+
+        public static MainServer.CycleInfo getCycleInfo(String lastDate) {
+            LocalDate start = LocalDate.parse(lastDate);
+            LocalDate today = LocalDate.now();
+            long day = ChronoUnit.DAYS.between(start, today) + 1;
+            if (day < 1) day = 1;
+            long cycleLength = 28;
+            LocalDate nextPeriod = start.plusDays(cycleLength);
+
+            String phase;
+            if (day <= 5) phase = "Menstrual";
+            else if (day <= 13) phase = "Follicular";
+            else if (day <= 17) phase = "Ovulation";
+            else if (day <= 28) phase = "Luteal";
+            else phase = "Menstrual";
+
+            String symptoms = switch (phase) {
+                case "Menstrual" -> "Cramps, fatigue, mood changes";
+                case "Follicular" -> "Rising energy, clear skin, improved mood";
+                case "Ovulation" -> "Bloating, high libido, light cramps";
+                case "Luteal" -> "Tender breasts, irritability, food cravings";
+                default -> "Mild changes";
+            };
+
+                return new MainServer.CycleInfo((int) day, symptoms, phase, nextPeriod.toString());
+        }
     }
 
-    // ===================== EXISTING HELPERS =====================
     private static void sendErrorResponse(HttpExchange exchange, int status, String message) throws IOException {
         exchange.getResponseHeaders().set("Content-Type", "text/plain");
         byte[] msg = message.getBytes();
@@ -148,20 +196,6 @@ public class MainServer {
         if (path.endsWith(".js")) return "application/javascript";
         if (path.endsWith(".jpg") || path.endsWith(".jpeg")) return "image/jpeg";
         return "text/plain";
-    }
-
-    public static String processChatRequest(String requestBody) {
-        // Crude JSON parsing
-        String userMessage = extractValueStatic(requestBody, "message");
-        String symptoms = extractValueStatic(requestBody, "symptoms");
-        String cycleDay = extractValueStatic(requestBody, "cycleDay");
-
-        // Call your Gemini API logic
-        ChatBot bot = new ChatBot(); // create instance
-        String aiResponse = bot.callGeminiApi(userMessage, symptoms, cycleDay);
-
-        // Return JSON for frontend
-        return "{\"response\": \"" + escapeJsonStatic(aiResponse) + "\"}";
     }
 
     private static String extractValueStatic(String json, String key) {

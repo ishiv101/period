@@ -14,11 +14,12 @@ public class ChatBot {
     private static final String API_KEY = System.getProperty("GEMINI_API");
     private static final String MODEL_NAME = "gemini-2.5-flash-preview-05-20";
 
-    public static String processChatRequest(String requestBody) {
+    public static String processChatRequest(String requestBody, MainServer.CycleInfo info) {
         // extracts message, symptoms, and cycle day from user message
         String userMessage = extractValue(requestBody, "message");
-        String symptoms = extractValue(requestBody, "symptoms");
-        String cycleDay = extractValue(requestBody, "cycleDay");
+        
+        String cycleDay = String.valueOf(info.getDay());
+        String symptoms = info.getSymptoms();
 
         String aiResponse = callGeminiApi(userMessage, symptoms, cycleDay);
 
@@ -37,7 +38,7 @@ public class ChatBot {
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setDoOutput(true);
 
-            String systemInstruction = "You are a friendly, compassionate, and non-diagnostic AI specialist focusing on menstrual cycle health. Include the user's phase and 2 practical tips for their current symptoms. Be concise and kind. Ask if they have any follow up questions.";
+            String systemInstruction = "You are a friendly, compassionate, and non-diagnostic AI specialist focusing on menstrual cycle health. Answer the user's question in a kind and concise way. Be detailed and helpful. Ask if they have any follow up questions.";
 
             String jsonPayload = String.format(
                 "{\"contents\": [{\"parts\": [{\"text\": \"%s\"}]}], \"systemInstruction\": {\"parts\": [{\"text\": \"%s\"}]}}",
@@ -78,7 +79,7 @@ public class ChatBot {
 
     private static String buildGeminiPrompt(String userMessage, String symptoms, String cycleDay) {
         return String.format(
-            "User Context:\n- Current Cycle Day: %s\n- Reported Symptoms: %s\nUser's Question: %s",
+            "User Context:\n- Current Cycle Day: %s\n- Potential Symptoms: %s\nUser's Question: %s",
             cycleDay, symptoms, userMessage
         );
     }
