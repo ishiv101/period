@@ -1,6 +1,6 @@
-# Period Pal - Cycle Tracker & Chatbot
+# LunaCycle - Cycle Tracker & Chatbot
 
-**Period Pal** is a web application designed to help users track their menstrual cycles and interact with a friendly AI chatbot for guidance on potential symptoms and cycle-related insights.
+**LunaCycle** is a web application designed to help users track their menstrual cycles and interact with a friendly AI chatbot for guidance on potential symptoms and cycle-related insights.
 
 ## Features
 
